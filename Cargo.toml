@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["FlutureCode"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+solana-sdk = "1.8.9"
+solana-program = "1.7"

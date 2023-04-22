@@ -2,77 +2,40 @@ use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
     entrypoint::ProgramResult,
-    msg,
     program_error::ProgramError,
     pubkey::Pubkey,
+    system_instruction,
 };
 
-entrypoint!(process_instructions);
+use crate::processor::process_instruction;
 
-pub fn process_instruction(
+entrypoint!(process_instruction);
+
+pub fn create_account(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    instruction_data: &[u8],
+    lamports: u64,
 ) -> ProgramResult {
-    // Your program logic goes here
-    msg!("Program entrypoint");
+    let account_info_iter = &mut accounts.iter();
 
-    // Parse the instruction data
-    let instruction = MyInstruction::unpack(instruction_data)?;
+    let owner = next_account_info(account_info_iter)?;
+    let account = next_account_info(account_info_iter)?;
 
-    // Get the account that will store the data
-    let accounts_iter = &mut accounts.iter();
-    let account = next_account_info(accounts_iter)?;
+    let mut data = vec![0u8; MyAccount::LEN];
+    let my_string = "Hello World".to_string();
+    let my_u8 = 42;
+    let my_account = MyAccount { my_string, my_u8 };
+    my_account.pack_into_slice(&mut data);
 
-    // Create a new account and store the data
-    let my_account = MyAccount::new();
-    my_account.serialize(&mut *account.data.borrow_mut())?;
+    let ix = system_instruction::create_account(
+        owner.key,
+        account.key,
+        lamports,
+        MyAccount::LEN as u64,
+        program_id,
+    );
+
+    solana_program::program::invoke_signed(&ix, &[owner.clone(), account.clone()], &[&data])?;
 
     Ok(())
-}
-
-#[derive(Debug, PartialEq)]
-pub struct MyInstruction {
-    pub data: [u8; 8],
-}
-
-impl MyInstruction {
-    pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
-        let data = input
-            .get(..8)
-            .and_then(|slice| slice.try_into().ok())
-            .ok_or(ProgramError::InvalidInstructionData)?;
-
-        Ok(MyInstruction { data })
-    }
-}
-
-// Define your account data structure
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct MyAccount {
-    pub my_string: String,
-    pub my_u8: u8,
-}
-
-impl MyAccount {
-    pub fn new() -> Self {
-        MyAccount {
-            my_string: "Hello World".to_string(),
-            my_u8: 42,
-        }
-    }
-
-    pub fn serialize(&self, output: &mut [u8]) -> ProgramResult {
-        let data = (self.my_string.clone(), self.my_u8);
-        let packed_data =
-            bincode::serialize(&data).map_err(|_| ProgramError::InvalidAccountData)?;
-        output.copy_from_slice(&packed_data);
-        Ok(())
-    }
-
-    pub fn deserialize(input: &[u8]) -> Result<Self, ProgramError> {
-        let (my_string, my_u8) =
-            bincode::deserialize(input).map_err(|_| ProgramError::InvalidAccountData)?;
-        Ok(MyAccount { my_string, my_u8 })
-    }
 }
