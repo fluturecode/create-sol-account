@@ -1,3 +1,5 @@
+use solana_program_template::state::MyAccount;
+
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
