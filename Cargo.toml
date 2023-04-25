@@ -7,4 +7,4 @@ authors = ["FlutureCode"]
 [dependencies]
 solana-sdk = "1.8.9"
 solana-program = "1.7"
-solana_program_template = { version = "0.1.0", path = "Cargo.toml" }
+solana_program_template = { version = "0.1.0", path = "/Users/elizabetheidelson/Desktop/create-account/Cargo.toml" }
